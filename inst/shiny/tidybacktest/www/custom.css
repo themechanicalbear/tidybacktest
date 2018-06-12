@@ -1,0 +1,70 @@
+.nav-tabs-custom>.nav-tabs>.active {border-top-color: #00a65a !IMPORTANT}
+
+.pagination>.active>a, .pagination>.active>a:focus, .pagination>.active>a:hover, .pagination>.active>span, .pagination>.active>span:focus, .pagination>.active>span:hover {
+z-index: 3;
+color: #fff;
+cursor: default;
+background-color: #00a65a !IMPORTANT;
+border-color: #00a65a !IMPORTANT
+}
+
+.js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {
+background: #00a65a !IMPORTANT
+}
+
+.irs-single {
+color: #fff;
+font-size: 11px;
+line-height: 1.333;
+text-shadow: none;
+padding: 1px 3px;
+background: #00a65a !IMPORTANT;
+-moz-border-radius: 3px;
+border-radius: 3px;
+}
+
+.irs-bar {
+height: 8px;
+top: 25px;
+border-top: 1px solid #00a65a !IMPORTANT;
+border-bottom: 1px solid #00a65a !IMPORTANT;
+background: #00a65a !IMPORTANT;
+}
+
+.irs-to {
+color: #fff;
+font-size: 11px;
+line-height: 1.333;
+text-shadow: none;
+padding: 1px 3px;
+background: #00a65a !IMPORTANT;
+-moz-border-radius: 3px;
+border-radius: 3px;
+}
+
+.irs-from {
+color: #fff;
+font-size: 11px;
+line-height: 1.333;
+text-shadow: none;
+padding: 1px 3px;
+background: #00a65a !IMPORTANT;
+-moz-border-radius: 3px;
+border-radius: 3px;
+}
+
+.irs-bar-edge {
+height: 8px;
+top: 25px;
+width: 14px;
+border: 1px solid #00a65a !IMPORTANT;
+border-right: 0;
+background: #00a65a !IMPORTANT;
+-moz-border-radius: 16px 0 0 16px;
+border-radius: 16px 0 0 16px;
+}
+
+.irs-grid-pol {
+opacity: 0.5;
+background: #00a65a !IMPORTANT;
+}
