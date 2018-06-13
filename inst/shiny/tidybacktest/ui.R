@@ -67,6 +67,7 @@ shinydashboard::dashboardPage(
 
     shinydashboard::sidebarMenu(
       shinydashboard::menuItem("Study", tabName = "Study", icon = icon("cogs"), startExpanded = TRUE,
+                               shiny::selectInput("host", "Host", c("git", "local")),
                                shiny::selectInput("stock", "Stock", symbol_list),
                                shiny::selectInput("study", "Study", c("Short Call", "Short Put", "Short Put Spread")),
                                shiny::selectInput("openOption", "Open on", c("First of Month", "First of Week", "Daily"))),

@@ -20,7 +20,6 @@
 # TODO implement solutions here (https://github.com/daattali/advanced-shiny)
 # TODO check this list out (http://enhancedatascience.com/2017/07/10/the-packages-you-need-for-your-r-shiny-application/)
 # TODO (http://www.ggplot2-exts.org/gallery/)
-# TODO move to 'here' to find files
 # TODO add testthat scripts
 # TODO move all functions to their own .R file for testthat
 # TODO make all function names start with same prefix when grouped like functions ie(open_put, open_call, close_put, close_call)
@@ -82,6 +81,23 @@ shiny::shinyServer(function(input, output, session) {
          <strong>Welcome:</strong> Please fill out the study inputs in the left sidebar</p>
          <p style=\"text-align: center; font-size: 20px;\">When ready click&nbsp;
          <strong>Run Study</strong>&nbsp;to see the results</p>")
+  })
+
+  observe({
+    if (input$host == "local") {
+      data_root <- here::here("data/options/")
+      symbol_list <- gsub(".RDS", "", list.files(here("data/options/")))
+      assign("symbol_list", symbol_list, envir = .GlobalEnv)
+      assign("data_root", data_root, envir = .GlobalEnv)
+      updateSelectizeInput(session, 'stock', choices = symbol_list)
+    }
+    if (input$host == "git") {
+      data_root <- here::here("data/git_options/")
+      symbol_list <- gsub(".RDS", "", list.files(here("data/git_options/")))
+      assign("symbol_list", symbol_list, envir = .GlobalEnv)
+      assign("data_root", data_root, envir = .GlobalEnv)
+      updateSelectizeInput(session, 'stock', choices = symbol_list)
+    }
   })
 
   # Loading image ----
@@ -156,10 +172,10 @@ shiny::shinyServer(function(input, output, session) {
     #results_table2 <- results_table
 
     output$DT_table <- DT::renderDT(results_table,
-                              options = list(pageLength = 15,
-                                             lengthMenu = c(15, 25, nrow(results_table2)),
-                                             scrollX = TRUE),
-                              server = FALSE)
+                                    options = list(pageLength = 15,
+                                                   lengthMenu = c(15, 25, nrow(results_table2)),
+                                                   scrollX = TRUE),
+                                    server = FALSE)
 
     # Scatterplot with contextual highlighting
     output$x2 = renderPlot({

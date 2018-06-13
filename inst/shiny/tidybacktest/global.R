@@ -1,7 +1,6 @@
 # Todos ----
 # TODO Should axis variable be in global?
 # TODO profile app - profvis::profvis(shiny::runApp())
-# TODO update the file location for data and scripts to be set using 'here'
 
 # Global setup ----
 suppressWarnings(suppressMessages(suppressPackageStartupMessages({
@@ -20,8 +19,8 @@ axis_vars <- c(
   "RSI" = "open_rsi",
   "Year" = "year")
 
-data_root <- here::here("data/options/")
-symbol_list <- gsub(".RDS", "", list.files(here("data/options/")))
+data_root <- here::here("data/git_options/")
+symbol_list <- gsub(".RDS", "", list.files(here("data/git_options/")))
 
 load_options_data <- function(stock) {
   data <- paste0(data_root, stock, ".RDS")
