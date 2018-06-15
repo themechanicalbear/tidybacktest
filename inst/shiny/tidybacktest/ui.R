@@ -126,8 +126,7 @@ shinydashboard::dashboardPage(
                         shiny::fluidRow(
                           shiny::column(width = 1, ""),
                           shiny::column(width = 5,
-                                        shiny::selectInput("xvar", "X-axis variable", axis_vars,
-                                                           selected = "trade_open")),
+                                        shiny::selectInput("xvar", "X-axis variable", axis_vars, selected = "trade_open")),
                           shiny::column(width = 6,
                                         shiny::selectInput("yvar", "Y-axis variable", axis_vars, selected = "profit"))
                         )
@@ -147,5 +146,5 @@ shinydashboard::dashboardPage(
       )
       )
     )
-  ) # shinydashboard::dashboardBody
+  )
 )

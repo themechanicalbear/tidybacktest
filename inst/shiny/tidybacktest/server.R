@@ -223,12 +223,15 @@ shiny::shinyServer(function(input, output, session) {
       bind_shiny("ggvis_profits")
 
     shiny::observe({
+      xvar_name <- names(axis_vars)[axis_vars == input$xvar]
+      yvar_name <- names(axis_vars)[axis_vars == input$yvar]
+
       output$ggplot_profits <- shiny::renderPlot(
         ggplot(results, aes_string(input$xvar, input$yvar)) +
           geom_point(aes(colour = profit > 0, alpha = 0.5, size = 3)) +
           scale_colour_manual(name = 'profit > 0', values = setNames(c('red','#00a65a'), c(TRUE, FALSE))) +
-          xlab(input$xvar) +
-          ylab(input$yvar) +
+          xlab(xvar_name) +
+          ylab(yvar_name) +
           theme_bw(),
         height = 600, width = "auto")
     })
