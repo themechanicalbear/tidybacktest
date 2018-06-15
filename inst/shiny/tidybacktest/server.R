@@ -167,7 +167,6 @@ shiny::shinyServer(function(input, output, session) {
     environment(output_HTML) <- environment()
     output_HTML()
 
-    # Render datatable ----
     results_table2 <- results_table[, c('trade_open', 'profit')]
     #results_table2 <- results_table
 
@@ -209,7 +208,6 @@ shiny::shinyServer(function(input, output, session) {
       #layer_paths(x = ~x_rng, y = ~y_rng, stroke := main.color, data = data_line) %>%
       bind_shiny("ggvis_trades")
 
-    # ggvis profits plot ----
     plot_data <- results
     plot_data <- dplyr::mutate(plot_data, cum_sum = cumsum(profit))
 
@@ -224,13 +222,15 @@ shiny::shinyServer(function(input, output, session) {
       #add_tooltip(trade_tooltip, "hover") %>%
       bind_shiny("ggvis_profits")
 
-    # ggplot profits plot ----
     shiny::observe({
-      p <- ggplot(plot_data, aes_string(input$xvar, input$yvar)) +
-        geom_point(colour = main_color, show.legend = TRUE) #+
-      #geom_line(aes(trade_open, stock_cumsum, colour = "red"), show.legend = TRUE)
-
-      output$ggplot_profits <- shiny::renderPlot(p)
+      output$ggplot_profits <- shiny::renderPlot(
+        ggplot(results, aes_string(input$xvar, input$yvar)) +
+          geom_point(aes(colour = profit > 0, alpha = 0.5, size = 3)) +
+          scale_colour_manual(name = 'profit > 0', values = setNames(c('red','#00a65a'), c(TRUE, FALSE))) +
+          xlab(input$xvar) +
+          ylab(input$yvar) +
+          theme_bw(),
+        height = 600, width = "auto")
     })
   })
 

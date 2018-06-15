@@ -13,7 +13,7 @@ open_short_put <- function(stock) {
            dplyr::group_by(quotedate) %>%
            dplyr::filter(m_dte == min(m_dte)) %>%
            dplyr::filter(m_delta == min(m_delta)) %>%
-           dplyr::filter(row_number() == 1) %>%
+           dplyr::filter(dplyr::row_number() == 1) %>%
            dplyr::ungroup(),
          envir = open_trades)
 }
