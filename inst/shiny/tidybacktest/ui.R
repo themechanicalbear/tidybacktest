@@ -121,7 +121,7 @@ shinydashboard::dashboardPage(
         id = "tabset1", height = "800px", width = "1000px",
         shiny::tabPanel("Trade Results",
                         shiny::htmlOutput("welcome_message"),
-                        introBox(plotOutput("ggplot_profits", height = 650), data.step = 5, data.intro = "Here we will plot the
+                        introBox(plotOutput("ggplot_profits", height = 650), data.step = 1, data.intro = "Here we will plot the
                                  running proift of the chosen study against the buy and hold stock position."),
                         shiny::fluidRow(
                           shiny::column(width = 1, ""),
@@ -132,18 +132,17 @@ shinydashboard::dashboardPage(
                         )
 
       ),
-      shiny::tabPanel("Portfolio", introBox(ggvisOutput("ggvis_profits"), data.step = 2, data.intro = "Here we will plot
+      shiny::tabPanel("Portfolio", introBox(plotOutput("ggplot_portfolio"), data.step = 2, data.intro = "Here we will plot
                                               the running proift of the chosen study against the buy and hold stock position.")),
       shiny::tabPanel("Table",
                       introBox(shiny::downloadButton('downloadData', 'Download'), h4(" "), data.step = 4, data.intro = "Click this
                                  button to download the results of the study in .csv format."),
                       introBox(shiny::dataTableOutput('table'), data.step = 3, data.intro = "Here we will provide a table of the
                                  trade results for download."),
+                      # column(8, DT::DTOutput('DT_table')),
+                      # column(4, ""))
                       column(6, DT::DTOutput('DT_table')),
-                      column(6, plotOutput('x2', height = 500))),
-      shiny::tabPanel("Portfolio ggplot", introBox(ggvisOutput("ggvis_trades"), data.step = 1, data.intro = "After running a study each
-                                 individual trade will be plotted here")
-      )
+                      column(6, plotOutput('x2', height = 500)))
       )
     )
   )

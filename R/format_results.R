@@ -6,10 +6,11 @@ format_results <- function(results) {
                   trade_close = as.Date(trade_close, origin = "1970-01-01"),
                   profit = 100 * (trade_open_price - trade_close_price),
                   id = as.integer(rownames(.)),
-                  color = ifelse(profit >= 0, "#00a65a", "red"),
-                  stock_move = (100 * (close - lag(close, 1))),
+                  #color = ifelse(profit >= 0, "#00a65a", "red"),
+                  stock_move = (100 * (close - dplyr::lag(close, 1))),
                   stock_move = ifelse(is.na(stock_move), 0, stock_move),
-                  stock_cumsum = cumsum(stock_move),
+                  stock_portfolio = cumsum(stock_move),
+                  strategy_portfolio = cumsum(profit),
                   days_held = as.numeric(trade_close) - as.numeric(trade_open)) %>%
     dplyr::arrange(trade_open)
 
