@@ -31,6 +31,7 @@
 # Temporary files created by R markdown
 *.utf8.md
 *.knit.md
+*.nb.html
 
 # Data files (sample data for testing included in data/git_options)
 data/options/*
