@@ -1,5 +1,6 @@
 implied_vol <- function(symbol) {
   library(dplyr)
+  #symbol <- "AMD"
   min_day <- 1440
   min_month <- min_day * 30
   min_year <- 525600
@@ -7,7 +8,6 @@ implied_vol <- function(symbol) {
   option_data <- readRDS(paste0(here::here(), "/data/options/", symbol, ".RDS"))
   rates <- risk_free_rate()
 
-  # Combine Call and Put data with same (date, expiration, and strike)
   option_data <- option_data %>%
     dplyr::mutate(mid = (ask + bid) / 2)
 
@@ -26,23 +26,22 @@ implied_vol <- function(symbol) {
   option_data <- puts %>%
     dplyr::left_join(calls, by = Reduce(intersect, list(names(puts), names(calls))))
 
-  # Step 1 Add Risk-Free-Rate, Near & Next expirations to dataset ----
-
-  # uni_dates <- as.data.frame(unique(option_data$quotedate)) %>%
-  #   setnames("date")
-
-  # Remove all the bid == 0 rows because they will not be used in the calculation
   option_data <- option_data %>%
-    filter(dte > 23,
-           ((strike <= close & put_bid > 0) | (strike >= close & call_bid > 0)))
+    dplyr::filter(dte > 23,
+                  ((strike <= close & put_bid > 0) | (strike >= close & call_bid > 0))) %>%
+    dplyr::group_by(quotedate) %>%
+    dplyr::mutate(dte_rank = dense_rank(dte)) %>%
+    dplyr::filter(dte_rank == 1 | dte_rank == 2) %>%
+    dplyr::mutate(dte_near = min(dte),
+                  dte_next = max(dte)) %>%
+    dplyr::ungroup() %>%
+    dplyr::left_join(rates, by = c("quotedate" = "date"))
 
   summary_output <- data.frame()
+
   vol_calc <- function(dt) {
     sub_data <- filter(option_data, quotedate == dt)
     if (nrow(sub_data) > 0) {
-      dte_near <- min(sub_data$dte)
-      dte_next <- dplyr::filter(sub_data, dte > dte_near + 6)
-      dte_next <- min(dte_next$dte)
       r0 <- dplyr::filter(rates, date == dt)
 
       F_level_near <- sub_data %>%
@@ -76,19 +75,7 @@ implied_vol <- function(symbol) {
     }
   }
 
-  #vol_calc("2012-01-05")
-  #vol_calc("2012-01-04")
-  #length(unique(option_data$quotedate))
-  purrr::map(unique(option_data$quotedate), vol_calc)
-  #option_data_test <- dplyr::filter(option_data, quotedate <= "2012-01-05")
-  #purrr::map(unique(option_data_test$quotedate), vol_calc)
-
-# Hide ----
-
-
-
-
-
+  system.time(purrr::map(unique(option_data$quotedate), vol_calc))
 
   # option_data <- option_data %>%
   #   dplyr::mutate(strike_diff = close - strike) %>%
@@ -96,171 +83,53 @@ implied_vol <- function(symbol) {
   #   dplyr::top_n(-4, abs(strike_diff)) %>%
   #   dplyr::ungroup()
 
-  # Temp shrink dataset to make testing faster
-  # if (single_date == "Yes") {
-  #   option_data <- filter(option_data, quotedate == test_date)
-  #   uni_dates <- filter(uni_dates, date == test_date)
-  # }
-  #
-  #   for (i in 1:nrow(uni_dates)) {
-  #     sub_data <- filter(option_data, quotedate == uni_dates[i, "date"])
-  #     rdate <- uni_dates[[i, "date"]]
-  #     if (nrow(sub_data) > 0) {
-  #       dte_near <- min(sub_data$dte)
-  #       sub_data <- filter(sub_data, dte > dte_near + 6)
-  #       dte_next <- min(sub_data$dte)
-  #       r0 <- filter(rates, date == rdate)
-  #       r1 <- r0[[1, 3]] / 100
-  #       r2 <- r0[[1, 5]] / 100
-  #       uni_dates[i, "near_dte"] <- dte_near
-  #       uni_dates[i, "next_dte"] <- dte_next
-  #       uni_dates[i, "r1"] <- r1
-  #       uni_dates[i, "r2"] <- r2
-  #       uni_dates[i, "t1"] <- (dte_near * min_day) / min_year
-  #       uni_dates[i, "t2"] <- (dte_next * min_day) / min_year
-  #     }
-  #   }
-
-  # Merge the data together adding near and next dte
-  # option_data <- option_data %>%
-  #   dplyr::left_join(uni_dates, by = c("quotedate" = "date"))
-  #
-  # option_data <- filter(option_data, dte == near_dte | dte == next_dte)
-
-  # Step 2 Find the ATM strike ----
-  # for (i in 1:nrow(uni_dates)) {
-  #   Fdate <- uni_dates[[i, "date"]]
-  #
-  #   F_data <- option_data %>%
-  #     dplyr::filter(quotedate == Fdate)
-  #
-  #   F_level_near <- F_data %>%
-  #     dplyr::filter(dte == near_dte) %>%
-  #     dplyr::mutate(p_c_abs = abs(call_mid_price - put_mid_price)) %>%
-  #     dplyr::filter(p_c_abs == min(p_c_abs, na.rm = TRUE))
-  #
-  #   F_level_next <- F_data %>%
-  #     dplyr::filter(dte == next_dte) %>%
-  #     dplyr::mutate(p_c_abs = abs(call_mid_price - put_mid_price)) %>%
-  #     dplyr::filter(p_c_abs == min(p_c_abs, na.rm = TRUE))
-  #
-  #   # Get near-term values
-  #   K1 <- F_level_near[[1, "strike"]]
-  #   R1 <- F_level_near[[1, "r1"]]
-  #   T1 <- F_level_near[[1, "t1"]]
-  #   M1 <- F_level_near[[1, "call_mid_price"]] - F_level_near[[1, "put_mid_price"]]
-  #   F1 <- K1 + exp(R1 * T1) * M1
-  #
-  #   # Get next-term values
-  #   K2 <- F_level_next[[1, "strike"]]
-  #   R2 <- F_level_next[[1, "r2"]]
-  #   T2 <- F_level_next[[1, "t2"]]
-  #   M2 <- F_level_next[[1, "call_mid_price"]] - F_level_next[[1, "put_mid_price"]]
-  #   F2 <- K2 + exp(R2 * T2) * M2
-  #
-  #   uni_dates[i, "K1"] <- K1
-  #   uni_dates[i, "K2"] <- K2
-  #   uni_dates[i, "F1"] <- F1
-  #   uni_dates[i, "F2"] <- F2
-  # }
-# End hide ----
-  K_data <- select(uni_dates, c(date, K1, K2, F1, F2))
-  option_data <- dplyr::left_join(option_data, K_data, by = c("quotedate" = "date"))
-
-  # Step 3 Calculate gap between strikes----
-  all_pro <- data.frame()
-
-  # Function to calculate gap between consecutive strikes
-  strike_gap <- function(x) {
-    for (i in 1:nrow(x)) {
-      dplyr::arrange(x, dte, strike)
-      ifelse(i != nrow(x),
-             x[i, "strike_gap"] <- x[i + 1, "strike"] - x[i, "strike"],
-             x[i, "strike_gap"] <- x[i, "strike"] - x[i - 1, "strike"])
-    }
-    sg <- dplyr::select(x, c("quotedate", "expiration", "strike", "dte", "strike_gap"))
-    all_pro <- rbind(all_pro, sg)
-    return(all_pro)
-  }
-
-  for (i in 1:nrow(uni_dates)) {
-    Fdate <- uni_dates[[i, "date"]]
-
-    F_data <- filter(option_data, quotedate == Fdate)
-    F_near_data <- filter(F_data, dte == near_dte)
-    F_next_data <- filter(F_data, dte == next_dte)
-
-    if (nrow(F_near_data) > 1) {
-      all_pro <- strike_gap(F_near_data)
-    }
-
-    if (nrow(F_next_data) > 1) {
-      all_pro <- strike_gap(F_next_data)
-    }
-  }
+  option_data <- dplyr::left_join(option_data, summary_output, by = c("symbol", "quotedate"))
 
   option_data <- option_data %>%
-    dplyr::left_join(all_pro, by = c("quotedate", "expiration", "strike", "dte"))
-
-  # Step 4 Calculate strike contribution ----
-  option_data <- option_data %>%
-    dplyr::mutate(near_strike_contrib = ifelse(dte == near_dte & strike < F1,
-                                               (strike_gap/(strike ^ 2)) * exp(r1 * t1) * put_mid_price,
-                                               ifelse(dte == near_dte & strike > F1,
-                                                      (strike_gap/(strike ^ 2)) * exp(r1 * t1) * call_mid_price,
-                                                      ifelse(dte == near_dte & strike == F1,
-                                                             (strike_gap/(strike ^ 2)) * exp(r1 * t1) * ((call_mid_price + put_mid_price) / 2),
-                                                             0)))) %>%
-    dplyr::mutate(next_strike_contrib = ifelse(dte == next_dte & strike < F2,
-                                               (strike_gap/(strike ^ 2)) * exp(r2 * t2) * put_mid_price,
-                                               ifelse(dte == next_dte & strike > F2,
-                                                      (strike_gap/(strike ^ 2)) * exp(r2 * t2) * call_mid_price,
-                                                      ifelse(dte == next_dte & strike == F2,
-                                                             (strike_gap/(strike ^ 2)) * exp(r2 * t2) * ((call_mid_price + put_mid_price) / 2),
-                                                             0))))
-
-  # Step 5 Calculate contribution totals & Sigma----
-  df <- data.frame()
+    dplyr::filter(complete.cases(.))
 
   option_data <- option_data %>%
-    dplyr::mutate(Q1 = (1/t1) * ((F1/K1) - 1) ^ 2,
-                  Q2 = (1/t2) * ((F2/K2) - 1) ^ 2)
-
-  for (i in 1:nrow(uni_dates)) {
-    Fdate <- uni_dates[[i, "date"]]
-
-    F_data <- dplyr::filter(option_data, quotedate == Fdate)
-    T1 <- F_data[1, "t1"]
-    T2 <- F_data[1, "t2"]
-    F_near_data <- dplyr::filter(F_data, dte == near_dte)
-    near_contrib_tot <- (2 / T1) * sum(F_near_data$near_strike_contrib)
-    F_next_data <- dplyr::filter(F_data, dte == next_dte)
-    next_contrib_tot <- (2 / T2) * sum(F_next_data$next_strike_contrib)
-    df[i, "near_tot"] <- near_contrib_tot
-    df[i, "next_tot"] <- next_contrib_tot
-    df[i, "date"] <- uni_dates[[i, "date"]]
-  }
-
-  df$date <- as.Date(df$date, origin = "1970-01-01")
+    dplyr::group_by(quotedate, dte) %>%
+    dplyr::arrange(strike) %>%
+    dplyr::mutate(strike_gap = dplyr::lead(strike, 1) - strike) %>%
+    dplyr::mutate(strike_gap = ifelse(is.na(strike_gap), strike - dplyr::lag(strike, 1), strike_gap)) %>%
+    dplyr::ungroup()
 
   option_data <- option_data %>%
-    dplyr::left_join(df, by = c("quotedate" = "date"))
-
-  option_data <- dplyr::mutate(option_data, sigma1 = near_tot - Q1,
-                               sigma2 = next_tot - Q2)
-
-  # Step 6 Calculate IV ----
+    dplyr::mutate(near_strike_contrib =
+                    ifelse(dte == dte_near & strike < f1,
+                           (strike_gap/(strike ^ 2)) * exp(r1 * t1) * put_mid_price,
+                           ifelse(dte == dte_near & strike > f1,
+                                  (strike_gap/(strike ^ 2)) * exp(r1 * t1) * call_mid_price,
+                                  ifelse(dte == dte_near & strike == f1,
+                                         (strike_gap/(strike ^ 2)) * exp(r1 * t1) * ((call_mid_price + put_mid_price) / 2),
+                                         0)))) %>%
+    dplyr::mutate(next_strike_contrib =
+                    ifelse(dte == dte_next & strike < f2,
+                           (strike_gap/(strike ^ 2)) * exp(r2 * t2) * put_mid_price,
+                           ifelse(dte == dte_next & strike > f2,
+                                  (strike_gap/(strike ^ 2)) * exp(r2 * t2) * call_mid_price,
+                                  ifelse(dte == dte_next & strike == f2,
+                                         (strike_gap/(strike ^ 2)) * exp(r2 * t2) * ((call_mid_price + put_mid_price) / 2),
+                                         0))))
 
   option_data <- option_data %>%
-    mutate(IV =
-             100 * sqrt(
-               (t1 * sigma1 * (((min_day * next_dte) - min_month) / ((min_day * next_dte) - (min_day * near_dte))) +
-                  t2 * sigma2 * ((min_month - (min_day * near_dte)) / ((min_day * next_dte) - (min_day * near_dte)))) *
-                 (min_year / min_month))
+    dplyr::mutate(q1 = (1/t1) * ((f1/k1) - 1) ^ 2,
+                  q2 = (1/t2) * ((f2/k2) - 1) ^ 2) %>%
+    dplyr::group_by(quotedate) %>%
+    dplyr::mutate(near_tot = (2 / t1) * sum(near_strike_contrib),
+                  next_tot = (2 / t2) * sum(next_strike_contrib)) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(sigma1 = near_tot - q1,
+                  sigma2 = next_tot - q2) %>%
+    dplyr::mutate(IV =
+                    100 * sqrt(
+                      (t1 * sigma1 * (((min_day * dte_next) - min_month) / ((min_day * dte_next) - (min_day * dte_near))) +
+                         t2 * sigma2 * ((min_month - (min_day * dte_near)) / ((min_day * dte_next) - (min_day * dte_near)))) *
+                        (min_year / min_month))
     )
 
-  # Step 7 Filter to single row for each day ----
-  (IV_data <- option_data %>%
-     dplyr::distinct(quotedate, close, IV))
+  IV_data <- option_data %>%
+    dplyr::distinct(quotedate, close, IV)
 }
 
