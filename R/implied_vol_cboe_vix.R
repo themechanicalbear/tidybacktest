@@ -1,5 +1,6 @@
-# https://www.cboe.com/micro/vix/vixwhite.pdf
-symbol <- "AMD"
+imp_vol <- function() {
+  # https://www.cboe.com/micro/vix/vixwhite.pdf
+symbol <- "SPY"
 min_day <- 1440
 min_year <- min_day * 365 # 525600
 min_month <- min_year / 12 # 43800
@@ -129,3 +130,22 @@ option_data <- option_data %>%
 
 IV_data <- option_data %>%
   dplyr::distinct(quotedate, close, IV)
+
+# Calculate IVRank
+IV_data <- IV_data %>%
+  dplyr::filter(complete.cases(.)) %>%
+  dplyr::arrange(quotedate) %>%
+  dplyr::mutate(iv_rank_252 =
+                  round(100 * TTR::runPercentRank(IV, n = 252, cumulative = FALSE, exact.multiplier = 1), digits = 0))
+
+monthly <- readRDS(paste0(here::here(), "/data/monthly.RDS"))
+
+monthly_high_IV <- IV_data %>%
+  dplyr::filter(iv_rank_252 >= 50) %>%
+  dplyr::filter(quotedate %in% monthly$date) %>%
+  dplyr::mutate(date = quotedate) %>%
+  dplyr::select(date)
+
+saveRDS(monthly_high_IV, file = paste0(here::here(), "/data/monthly_high_iv.RDS"))
+}
+

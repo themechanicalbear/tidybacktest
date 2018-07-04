@@ -112,6 +112,11 @@ shiny::shinyServer(function(input, output, session) {
       assign("first_day", monthly, envir = .GlobalEnv)
       assign("inc.amount", .004)
     }
+    else if (openOption == "High IV") {
+      monthly <- readRDS(here("data/monthly_high_iv.RDS"))
+      assign("first_day", monthly, envir = .GlobalEnv)
+      assign("inc.amount", .004)
+    }
     else if (openOption == "First of Week") {
       data(list = "mondays")
       assign("first_day", mondays, envir = .GlobalEnv)

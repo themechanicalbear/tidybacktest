@@ -70,7 +70,7 @@ shinydashboard::dashboardPage(
                                shiny::selectInput("host", "Host", c("git", "local")),
                                shiny::selectInput("stock", "Stock", symbol_list),
                                shiny::selectInput("study", "Study", c("Short Call", "Short Put", "Short Put Spread")),
-                               shiny::selectInput("openOption", "Open on", c("First of Month", "First of Week", "Daily"))),
+                               shiny::selectInput("openOption", "Open on", c("First of Month", "High IV", "First of Week", "Daily"))),
       shinydashboard::menuItem("Entry Criteria", tabName = "Entry Criteria", icon = icon("cogs"),
                                shiny::sliderInput("open_dte", "DTE", 0, 90, 30, step = 5),
                                shiny::conditionalPanel(
