@@ -1,6 +1,7 @@
 #' @export
 bind_option_closes <- function(stock) {
-  df_pattern <- paste0("option_close_", stock, "_[0-9]{5}")
+  # df_pattern <- paste0("option_close_", stock, "_[0-9]{5}")
+  df_pattern <- paste0("option_close_", stock, "_[0-9]{4}")
   df_list <- ls(pattern = df_pattern, envir = close_trades)
 
   option_analysis_closes <- dplyr::bind_rows(lapply(df_list,
